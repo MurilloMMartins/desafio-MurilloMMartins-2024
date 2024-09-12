@@ -17,16 +17,24 @@ const recintos = [
 
 class RecintosZoo {
 
-  animaisEmBiomaAdequado(animais, biomas) {
-    return animais.informacao.bioma.some((bioma) => biomas.includes(bioma));
-  }
-
   calcularEspacoOcupado(recinto) {
     return recinto.animais.reduce((espacoTotal, animalRecinto) => espacoTotal + animalRecinto.quantidade * animais[animalRecinto.especie].tamanho, 0);
   }
 
   recintoPossuiEspecie(recinto, especieInserida) {
     return recinto.animais.some((animalRecinto) => animalRecinto.especie === especieInserida);
+  }
+
+  calcularEspacoLivre(recinto, animaisParaInserir) {
+    const possuiEspecie = this.recintoPossuiEspecie(recinto, animaisParaInserir.especie);
+    // esse espaço extra só é adicionado caso a espécie inserida não esteja no recinto
+    // mas não é adicionado caso o recinto esteja vazio
+    const espacoExtra = (!possuiEspecie && recinto.animais.length !== 0) ? 1 : 0;
+
+    const espacoOcupado = this.calcularEspacoOcupado(recinto);
+    const espacoLivre = recinto.tamanho - (espacoOcupado + animaisParaInserir.espacoNecessario + espacoExtra);
+
+    return espacoLivre;
   }
 
   contemCarnivoro(recinto) {
@@ -38,6 +46,36 @@ class RecintosZoo {
     return false;
   }
 
+  regraCarnivoros(recinto, animaisParaInserir) {
+    // lidando com carnívoros
+    const carnivoroPresente = this.contemCarnivoro(recinto);
+    if (animaisParaInserir.informacao.carnivoro || carnivoroPresente) {
+      if (recinto.animais.length !== 0 && recinto.animais[0].especie !== animaisParaInserir.especie)
+        return false
+    }
+    return true;
+  }
+
+  regraMacacoSozinho(recinto, animal, quantidade) {
+    // regra para macaco não poder ficar sozinho
+    if (animal === 'MACACO' && quantidade === 1)
+      if (recinto.animais.length === 0)
+        return false
+    return true;
+  }
+
+  animaisEmBiomaAdequado(animais, biomas) {
+    return animais.informacao.bioma.some((bioma) => biomas.includes(bioma));
+  }
+  
+  construirEstruturaParaAnimais(animal, quantidade) {
+    const informacaoEspecie = animais[animal]
+    const espacoNecessario = informacaoEspecie.tamanho * quantidade;
+    const estruturaAnimais = { especie: animal, informacao: informacaoEspecie, espacoNecessario: espacoNecessario };
+    
+    return estruturaAnimais;
+  }
+
   analisaRecintos(animal, quantidade) {
     if (!(animal in animais))
       return { erro: "Animal inválido" };
@@ -45,34 +83,17 @@ class RecintosZoo {
     if (quantidade <= 0)
       return { erro: "Quantidade inválida" };
 
-    const informacaoEspecie = animais[animal]
-    const espacoNecessario = informacaoEspecie.tamanho * quantidade;
-    const animaisParaInserir = { especie: animal, informacao: informacaoEspecie, espacoNecessario: espacoNecessario };
-
+    const animaisParaInserir = this.construirEstruturaParaAnimais(animal, quantidade);
     const recintosValidos = [];
     for (const [indice, recinto] of recintos.entries()) {
-      // regra para macaco não poder ficar sozinho
-      if(animal === 'MACACO' && quantidade === 1)
-        if(recinto.animais.length === 0)
-            continue;
-
-      // lidando com carnívoros
-      const carnivoroPresente = this.contemCarnivoro(recinto);
-      if (animaisParaInserir.informacao.carnivoro || carnivoroPresente) {
-        if (recinto.animais.length !== 0 && recinto.animais[0].especie !== animaisParaInserir.especie)
-          continue;
-      }
-
       if (!this.animaisEmBiomaAdequado(animaisParaInserir, recinto.bioma))
         continue;
+      if (!this.regraMacacoSozinho(recinto, animal, quantidade))
+        continue;
+      if (!this.regraCarnivoros(recinto, animaisParaInserir))
+        continue;
 
-      const possuiEspecie = this.recintoPossuiEspecie(recinto, animaisParaInserir.especie);
-      // esse espaço extra só é adicionado caso a espécie inserida não esteja no recinto
-      // mas não é adicionado caso o recinto esteja vazio
-      const espacoExtra = (!possuiEspecie && recinto.animais.length !== 0) ? 1 : 0;
-
-      const espacoOcupado = this.calcularEspacoOcupado(recinto);
-      const espacoLivre = recinto.tamanho - (espacoOcupado + animaisParaInserir.espacoNecessario + espacoExtra);
+      const espacoLivre = this.calcularEspacoLivre(recinto, animaisParaInserir);
       if (espacoLivre < 0)
         continue;
 
