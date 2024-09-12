@@ -22,11 +22,20 @@ class RecintosZoo {
   }
 
   calcularEspacoOcupado(recinto) {
-    return recinto.animais.reduce((espacoTotal, animalRecinto) => espacoTotal + animalRecinto.quantidade*animais[animalRecinto.especie].tamanho, 0);
+    return recinto.animais.reduce((espacoTotal, animalRecinto) => espacoTotal + animalRecinto.quantidade * animais[animalRecinto.especie].tamanho, 0);
   }
 
   recintoPossuiEspecie(recinto, especieInserida) {
     return recinto.animais.some((animalRecinto) => animalRecinto.especie === especieInserida);
+  }
+
+  contemCarnivoro(recinto) {
+    for (const animal of recinto.animais) {
+      if (animais[animal.especie].carnivoro)
+        return true
+    }
+
+    return false;
   }
 
   analisaRecintos(animal, quantidade) {
@@ -36,14 +45,20 @@ class RecintosZoo {
     if (quantidade <= 0)
       return { erro: "Quantidade inválida" };
 
-    // const carnivoro = animais[animal].carnivoro;
     const informacaoEspecie = animais[animal]
     const espacoNecessario = informacaoEspecie.tamanho * quantidade;
-    const animaisParaInserir = { especie: animal, informacao: informacaoEspecie, espacoNecessario: espacoNecessario};
+    const animaisParaInserir = { especie: animal, informacao: informacaoEspecie, espacoNecessario: espacoNecessario };
 
     const recintosValidos = [];
     for (const [indice, recinto] of recintos.entries()) {
-      if(!this.animaisEmBiomaAdequado(animaisParaInserir, recinto.bioma))
+      // lidando com carnívoros
+      const carnivoroPresente = this.contemCarnivoro(recinto);
+      if (animaisParaInserir.informacao.carnivoro || carnivoroPresente) {
+        if (recinto.animais.length !== 0 && recinto.animais[0].especie !== animaisParaInserir.especie)
+          continue;
+      }
+
+      if (!this.animaisEmBiomaAdequado(animaisParaInserir, recinto.bioma))
         continue;
 
       const possuiEspecie = this.recintoPossuiEspecie(recinto, animaisParaInserir.especie);
@@ -53,21 +68,8 @@ class RecintosZoo {
 
       const espacoOcupado = this.calcularEspacoOcupado(recinto);
       const espacoLivre = recinto.tamanho - (espacoOcupado + animaisParaInserir.espacoNecessario + espacoExtra);
-      if(espacoLivre < 0)
+      if (espacoLivre < 0)
         continue;
-
-      // const contemCarnivoro = false;
-      // for (const animal in recinto.animais) {
-      //   if (animais[animal.tipo].carnivoro)
-      //     contemCarnivoro = true;
-      // }
-
-      // if (contemCarnivoro || carnivoro) {
-      //   // necessariamente teremos pelo menos um animal no recinto
-      //   // se ele for carnívoro, então somente ele estará no recinto
-      //   if (recinto.animais[0].tipo !== animal)
-      //     continue;
-      // }
 
       recintosValidos.push(`Recinto ${indice + 1} (espaço livre: ${espacoLivre} total: ${recinto.tamanho})`)
     }
