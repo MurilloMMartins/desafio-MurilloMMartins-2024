@@ -51,6 +51,11 @@ class RecintosZoo {
 
     const recintosValidos = [];
     for (const [indice, recinto] of recintos.entries()) {
+      // regra para macaco não poder ficar sozinho
+      if(animal === 'MACACO' && quantidade === 1)
+        if(recinto.animais.length === 0)
+            continue;
+
       // lidando com carnívoros
       const carnivoroPresente = this.contemCarnivoro(recinto);
       if (animaisParaInserir.informacao.carnivoro || carnivoroPresente) {
