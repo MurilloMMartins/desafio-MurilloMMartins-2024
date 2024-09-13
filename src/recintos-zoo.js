@@ -64,15 +64,23 @@ class RecintosZoo {
     return true;
   }
 
+  regraHipopotamo(recinto, animaisParaInserir) {
+    if (recinto.animais.length !== 0)
+      if (animaisParaInserir.especie === 'HIPOPOTAMO' || recinto.animais.some((animal) => animal.especie === 'HIPOPOTAMO'))
+        if (!animais['HIPOPOTAMO'].bioma.every((bioma) => recinto.bioma.includes(bioma)))
+          return false;
+    return true; 
+  }
+
   animaisEmBiomaAdequado(animais, biomas) {
     return animais.informacao.bioma.some((bioma) => biomas.includes(bioma));
   }
-  
+
   construirEstruturaParaAnimais(animal, quantidade) {
     const informacaoEspecie = animais[animal]
     const espacoNecessario = informacaoEspecie.tamanho * quantidade;
     const estruturaAnimais = { especie: animal, informacao: informacaoEspecie, espacoNecessario: espacoNecessario };
-    
+
     return estruturaAnimais;
   }
 
@@ -92,6 +100,8 @@ class RecintosZoo {
         continue;
       if (!this.regraCarnivoros(recinto, animaisParaInserir))
         continue;
+      if (!this.regraHipopotamo(recinto, animaisParaInserir))
+        continue;
 
       const espacoLivre = this.calcularEspacoLivre(recinto, animaisParaInserir);
       if (espacoLivre < 0)
@@ -100,7 +110,7 @@ class RecintosZoo {
       recintosValidos.push(`Recinto ${indice + 1} (espaço livre: ${espacoLivre} total: ${recinto.tamanho})`)
     }
 
-    if (recintosValidos.length == 0)
+    if (recintosValidos.length === 0)
       return { erro: "Não há recinto viável" }
 
     return { recintosViaveis: recintosValidos };
