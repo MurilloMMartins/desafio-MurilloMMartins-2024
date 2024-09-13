@@ -69,7 +69,7 @@ class RecintosZoo {
       if (animaisParaInserir.especie === 'HIPOPOTAMO' || recinto.animais.some((animal) => animal.especie === 'HIPOPOTAMO'))
         if (!animais['HIPOPOTAMO'].bioma.every((bioma) => recinto.bioma.includes(bioma)))
           return false;
-    return true; 
+    return true;
   }
 
   animaisEmBiomaAdequado(animais, biomas) {
@@ -84,6 +84,19 @@ class RecintosZoo {
     return estruturaAnimais;
   }
 
+  validarRegras(recinto, animaisParaInserir, animal, quantidade) {
+    if (!this.animaisEmBiomaAdequado(animaisParaInserir, recinto.bioma))
+      return false;
+    if (!this.regraMacacoSozinho(recinto, animal, quantidade))
+      return false;
+    if (!this.regraCarnivoros(recinto, animaisParaInserir))
+      return false;
+    if (!this.regraHipopotamo(recinto, animaisParaInserir))
+      return false;
+    
+    return true;
+  }
+
   analisaRecintos(animal, quantidade) {
     if (!(animal in animais))
       return { erro: "Animal inválido" };
@@ -94,13 +107,7 @@ class RecintosZoo {
     const animaisParaInserir = this.construirEstruturaParaAnimais(animal, quantidade);
     const recintosValidos = [];
     for (const [indice, recinto] of recintos.entries()) {
-      if (!this.animaisEmBiomaAdequado(animaisParaInserir, recinto.bioma))
-        continue;
-      if (!this.regraMacacoSozinho(recinto, animal, quantidade))
-        continue;
-      if (!this.regraCarnivoros(recinto, animaisParaInserir))
-        continue;
-      if (!this.regraHipopotamo(recinto, animaisParaInserir))
+      if (!this.validarRegras(recinto, animaisParaInserir, animal, quantidade))
         continue;
 
       const espacoLivre = this.calcularEspacoLivre(recinto, animaisParaInserir);
